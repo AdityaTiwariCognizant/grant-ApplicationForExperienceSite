@@ -20,6 +20,8 @@ export default class SupportApplicationForm extends LightningElement {
     maxAllowedIncome = 2000
     errorMsg;
 
+    searchPhoneKey;
+
     @track errorClass='';
 
     @track searchApplication = true;
@@ -32,6 +34,13 @@ export default class SupportApplicationForm extends LightningElement {
         Postal_Code:POSTAL_CODE,
         Monthly_Income:MONTHLY_INCOME,
         Support_Option:SUPPORT_OPTION
+    }
+
+    handlePhoneSearch(event){
+        //call an apex class to check if phone number already exist in grant
+        //application> if yes show pre existing data in a card and give user 
+        //2 button 1) to update the data - this will redirect user to prefilled form
+        //2) go back to landing page to search new phone
     }
 
     handleFirstName(event){

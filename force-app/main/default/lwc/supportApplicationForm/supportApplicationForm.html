@@ -1,6 +1,11 @@
 <template>
   <template if:true={searchApplication}>
-    <div></div>
+    <div>
+      <lightning-card>
+        <div>Enter your mobile to check existing application</div>
+        <lightning-input lable="Phone Number" style="text-align: left;" value={searchPhoneKey} onchange={handlePhoneSearch}></lightning-input>
+      </lightning-card>
+    </div>
   </template>
   <template if:true={newApplication}>
     <div class="demo-only demo-only--sizing slds-grid slds-wrap">
@@ -11,10 +16,10 @@
             <div class="slds-box slds-box_x-small slds-m-around_x-small">
                 <lightning-card class="card-class"  icon-name="standard-record">Support Application
                     <div class="slds-var-m-around_x-large">
-                        <lightning-input label="First Name" style="text-align: left;" value={ApplicantDetails.First_Name} onchange={handleFirstName} required="true"></lightning-input>
-                        <lightning-input label="Last Name" style="text-align: left;" value={ApplicantDetails.Last_Name} onchange={handleLastName} required="true"></lightning-input>
-                        <lightning-input label="Phone Number" style="text-align: left;" value={ApplicantDetails.Phone} onchange={handlePhone}  required="true" pattern="[0-9]{2}[0-9]{10}"></lightning-input>
-                        <lightning-input label="Postal Code" style="text-align: left;" value={ApplicantDetails.Postal_Code} onchange={handlePostalCode} pattern="[0-9]{6}"  required="true"></lightning-input>
+                        <lightning-input label="First Name" style="text-align: left;" value={ApplicantDetails.First_Name} onchange={handleFirstName} placeholder="Enter first name without any digits or special characters" required="true"></lightning-input>
+                        <lightning-input label="Last Name" style="text-align: left;" value={ApplicantDetails.Last_Name} onchange={handleLastName} placeholder="Enter last name without any digits or special characters" required="true"></lightning-input>
+                        <lightning-input label="Phone Number" style="text-align: left;" value={ApplicantDetails.Phone} onchange={handlePhone} placeholder="+CC(2 Digit country code) - 10 Digit valid phone number" required="true" pattern="[0-9]{2}[0-9]{10}"></lightning-input>
+                        <lightning-input label="Postal Code" style="text-align: left;" value={ApplicantDetails.Postal_Code} onchange={handlePostalCode} placeholder="6 Digit valid postal/zip code" pattern="[0-9]{6}"  required="true"></lightning-input>
                         <lightning-input label="Monthly Income" 
                                          style="text-align: left;" 
                                          value={ApplicantDetails.Monthly_Income} 
