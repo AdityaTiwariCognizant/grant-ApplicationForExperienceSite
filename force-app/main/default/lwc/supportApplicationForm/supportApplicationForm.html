@@ -1,0 +1,63 @@
+<template>
+  <template if:true={searchApplication}>
+    <div></div>
+  </template>
+  <template if:true={newApplication}>
+    <div class="demo-only demo-only--sizing slds-grid slds-wrap">
+        <div class="slds-size_2-of-8">
+            <div class=" slds-var-m-around_x-small"></div>
+          </div>
+          <div class="slds-size_4-of-8">
+            <div class="slds-box slds-box_x-small slds-m-around_x-small">
+                <lightning-card class="card-class"  icon-name="standard-record">Support Application
+                    <div class="slds-var-m-around_x-large">
+                        <lightning-input label="First Name" style="text-align: left;" value={ApplicantDetails.First_Name} onchange={handleFirstName} required="true"></lightning-input>
+                        <lightning-input label="Last Name" style="text-align: left;" value={ApplicantDetails.Last_Name} onchange={handleLastName} required="true"></lightning-input>
+                        <lightning-input label="Phone Number" style="text-align: left;" value={ApplicantDetails.Phone} onchange={handlePhone}  required="true" pattern="[0-9]{2}[0-9]{10}"></lightning-input>
+                        <lightning-input label="Postal Code" style="text-align: left;" value={ApplicantDetails.Postal_Code} onchange={handlePostalCode} pattern="[0-9]{6}"  required="true"></lightning-input>
+                        <lightning-input label="Monthly Income" 
+                                         style="text-align: left;" 
+                                         value={ApplicantDetails.Monthly_Income} 
+                                         onchange={handleMonthlyIncome} 
+                                         required="true" 
+                                         field-level-help="Please note that only person with monthly income lower than SGD 2000 are eligible for support"
+                                         class={errorClass}
+                                         
+                                         > 
+                        </lightning-input>
+                        <template if:true={incomeInvalidMessageflag}>
+                          <div style="font-size:12px;text-align: left;color: #ba0517">Monthly income must be below SGD 2000.</div>
+                          </template>
+                        <lightning-combobox 
+            
+                            name="Support Options" 
+            
+                            label="Support Options"
+
+                            style="text-align: left;"
+            
+                            value={selectedPicklistValue} 
+            
+                            onchange={handleSupportOptionChange} 
+            
+                            options={options}
+                            
+                            required="true"
+                            
+                            >
+            
+                    </lightning-combobox>
+            
+                    </div>
+                    <lightning-button class="slds-var-p-right_x-small" label="Cancel" variant="brand-outline"></lightning-button>
+
+                    <lightning-button class="slds-var-p-left_x-small" label="Submit" variant="brand" onclick={handleSubmit} disabled={buttonFlag}></lightning-button>
+                </lightning-card>
+            </div>
+          </div>
+          <div class="slds-size_2-of-8">
+            <div class="slds-m-around_x-small"></div>
+          </div>
+    </div>
+  </template>
+</template>
