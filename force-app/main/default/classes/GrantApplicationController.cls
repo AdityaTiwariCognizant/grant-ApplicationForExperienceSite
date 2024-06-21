@@ -240,7 +240,9 @@ public without sharing class GrantApplicationController {
     public static List<Map<String, String>> getOptionsFromCMT() {
         List<Map<String, String>> options = new List<Map<String, String>>();
         
-        for (Grant_Application_Params__mdt option : [SELECT Months_of_grant__c,Amount_each_month__c FROM Grant_Application_Params__mdt WITH USER_MODE]) {
+        List<Grant_Application_Params__mdt> metaDataOptionsList = [SELECT Months_of_grant__c,Amount_each_month__c FROM Grant_Application_Params__mdt WITH USER_MODE];
+
+        for (Grant_Application_Params__mdt option : metaDataOptionsList) {
             Map<String, String> optionMap = new Map<String, String>();
             optionMap.put('label', 'SGD '+String.valueOf(option.Amount_each_month__c)+' per month for '+String.valueOf(option.Months_of_grant__c)+' months');
             optionMap.put('value', 'SGD '+String.valueOf(option.Amount_each_month__c)+' per month for '+String.valueOf(option.Months_of_grant__c)+' months');
