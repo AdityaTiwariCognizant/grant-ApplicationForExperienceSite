@@ -30,7 +30,7 @@ export default class SupportApplicationForm extends LightningElement {
     maxAllowedIncome = 2000
     errorMsg;
     @track buttonFlag2 = true;
-    @track toastMessageType = 'created';
+    @track toastMessageType = 'updated';
 
     searchPhoneKey;
 
@@ -85,6 +85,7 @@ export default class SupportApplicationForm extends LightningElement {
         this.selectedPicklistValue = '';
 
         this.showExistingApplication = false;
+        this.toastMessageType = 'created';
     }
 
     handlePhoneSearch(event){
@@ -130,7 +131,7 @@ export default class SupportApplicationForm extends LightningElement {
             this.showExistingApplication = true;
             this.regretMessageFlag = false;
             // this.searchApplication=false;
-            
+            this.toastMessageType='updated';
 
             })
         .catch((error)=>{
@@ -165,6 +166,7 @@ export default class SupportApplicationForm extends LightningElement {
         })
         this.editMessage = true;
         this.searchApplication = true;
+        this.toastMessageType = 'created';
     }
 
     handleSearchPhoneClearBtn(){
@@ -281,21 +283,6 @@ export default class SupportApplicationForm extends LightningElement {
         }
     }
 
-    // monthlyIncomeCheck(value){
-    //     if(value>=this.maxAllowedIncome){
-    //         this.errorClass='slds-has-error';
-    //         this.incomeInvalidMessageflag = true;
-
-    //         return false
-    //     }
-    //     else{
-    //         this.errorClass='';
-
-    //         this.incomeInvalidMessageflag = false;
-    //         return true
-    //     }
-    // }
-
     options = [];
     @wire(getOptionsFromCMT)
     wiredOptions({ error, data }) {
@@ -352,7 +339,7 @@ export default class SupportApplicationForm extends LightningElement {
 
             })
 
-            this.newApplication = false;
+        this.newApplication = false;
         this.searchApplication = true;
         
         this.existingApplication.FirstName = '';
@@ -413,6 +400,7 @@ export default class SupportApplicationForm extends LightningElement {
         this.showExistingApplication = false;
 
         this.searchPhoneKey='';
+        this.toastMessageType = '';
     }
 
 

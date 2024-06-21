@@ -10,7 +10,6 @@ public without sharing class GrantApplicationController {
 
         for (Integer i=0;i<customMetadataRecords.size();i++) {
 
-            //new code
             String amount = String.valueOf(customMetadataRecords[i].Amount_each_month__c);
             String months = String.valueOf(customMetadataRecords[i].Months_of_grant__c);
             String label = 'SGD '+amount+' per month for '+months+' months';
