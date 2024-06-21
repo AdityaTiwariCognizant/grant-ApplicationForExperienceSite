@@ -10,7 +10,9 @@
       "enableS1EncryptedStoragePref2": false
     },
     "communitiesSettings": {
-      "enableNetworksEnabled": true
+      "enableNetworksEnabled": true,
+      "enableOotbProfExtUserOpsEnable": true
+
     },
     "experienceBundleSettings": {
         "enableExperienceBundleMetadata": true
