@@ -1,4 +1,6 @@
 import { LightningElement,api,track,wire } from 'lwc';
+import Toast from 'lightning/toast';
+
 import FIRST_NAME from '@salesforce/schema/Grant_Application__c.First_Name__c';
 import LAST_NAME from '@salesforce/schema/Grant_Application__c.Last_Name__c';
 import PHONE_NUMBER from '@salesforce/schema/Grant_Application__c.Phone_Number__c';
@@ -6,17 +8,9 @@ import POSTAL_CODE from '@salesforce/schema/Grant_Application__c.Postal_Code__c'
 import MONTHLY_INCOME from	'@salesforce/schema/Grant_Application__c.Monthly_Income__c';
 import SUPPORT_OPTION from '@salesforce/schema/Grant_Application__c.Support_Option__c';
 
-import {ShowToastEvent} from 'lightning/platformShowToastEvent';
-
-import ToastContainer from 'lightning/toastContainer';
-
-import Toast from 'lightning/toast';
-
-
 import createGrantApplication from '@salesforce/apex/GrantApplicationController.createGrantApplication';
 import getOptionsFromCMT from '@salesforce/apex/GrantApplicationController.getOptionsFromCMT';
 import searchPhoneInGrantApplication from '@salesforce/apex/GrantApplicationController.searchPhoneInGrantApplication';
-
 
 export default class SupportApplicationForm extends LightningElement {
 
@@ -25,25 +19,18 @@ export default class SupportApplicationForm extends LightningElement {
     @api objectApiName;
     @api recordId;
     selectedPicklistValue='';
-    buttonFlag = true;
+    @track buttonFlag = true;
     @track incomeInvalidMessageflag = false;
     maxAllowedIncome = 2000
     errorMsg;
     @track buttonFlag2 = true;
     @track toastMessageType = 'updated';
-
     searchPhoneKey;
-
-
     @track editMessage = true;
-
     @track errorClass='';
-
     @track searchApplication = true;
     @track newApplication = false;
-
     @track regretMessageFlag = false;
-
     @track showExistingApplication = false;
 
     ApplicantDetails={
@@ -54,7 +41,6 @@ export default class SupportApplicationForm extends LightningElement {
         Monthly_Income:MONTHLY_INCOME,
         Support_Option:SUPPORT_OPTION
     }
-
 
     @track existingApplication={
         FirstName:'',
@@ -89,13 +75,7 @@ export default class SupportApplicationForm extends LightningElement {
     }
 
     handlePhoneSearch(event){
-        //call an apex class to check if phone number already exist in grant
-        //application> if yes show pre existing data in a card and give user 
-        //2 button 1) to update the data - this will redirect user to prefilled form
-        //2) go back to landing page to search new phone
         this.searchPhoneKey = event.target.value;
-        
-
     }
 
         handlePhoneSearchSubmit(){
@@ -130,7 +110,6 @@ export default class SupportApplicationForm extends LightningElement {
 
             this.showExistingApplication = true;
             this.regretMessageFlag = false;
-            // this.searchApplication=false;
             this.toastMessageType='updated';
 
             })
@@ -146,14 +125,6 @@ export default class SupportApplicationForm extends LightningElement {
             this.existingApplication.SupportOption='';
             console.log('error occured');
             this.toastMessageType='created';
-
-
-            // const toastevent = new ShowToastEvent({
-            //     title : 'Grant Application does not exist',
-            //     message : 'Application for phone number '+this.searchPhoneKey +' does not exist.',
-            //     variant : 'error'
-            // });
-            // this.dispatchEvent(toastevent);
             
             Toast.show({
                 label : 'Grant Application does not exist',
@@ -288,7 +259,13 @@ export default class SupportApplicationForm extends LightningElement {
     wiredOptions({ error, data }) {
         if (data) {
             console.log('Data Custom Metadata Type: '+JSON.stringify(data));
-            this.options = data;
+            //this.options = data;
+
+            console.log(JSON.stringify(data));
+            this.options =  Object.keys(data).map(key => ({
+                label: key,
+                value: data[key]
+            }));
             console.log('Options for Combobox : '+JSON.stringify(this.options));
 
         } else if (error) {
@@ -321,14 +298,7 @@ export default class SupportApplicationForm extends LightningElement {
         })
         .then((result)=>{
             console.log('Applicant Details Object **** '+JSON.stringify(this.ApplicantDetails));
-            // const toastevent = new ShowToastEvent({
-            //     title : 'Grant Application Submitted',
-            //     message : 'Application for '+this.ApplicantDetails.First_Name +' is '+this.toastMessageType+' successfully.',
-            //     variant : 'success'
-            // });
-            //this.dispatchEvent(toastevent);
-
-            //success toast that will show up on LWR here
+           
             Toast.show({
                 
                 label : 'Grant Application Submitted',
@@ -356,22 +326,12 @@ export default class SupportApplicationForm extends LightningElement {
         this.ApplicantDetails.Monthly_Income='';
         this.ApplicantDetails.Support_Option='';
 
-        
-
         this.showExistingApplication = false;
 
         this.searchPhoneKey='';
         })
         .catch((error)=>{
             this.handleErrors(error);
-            // const toastevent = new ShowToastEvent({
-            //     title: 'Error',
-            //     message: 'Error while submitting application :'+this.errorMsg,
-            //     variant: 'error'
-            // });
-            // this.dispatchEvent(toastevent);
-
-            //error toast that will show up on LWR here
             Toast.show({
                 title: 'Error',
                 message: 'Error while submitting application :'+this.errorMsg,

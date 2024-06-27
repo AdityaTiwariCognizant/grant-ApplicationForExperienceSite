@@ -10,9 +10,7 @@
       <lightning-card style="text-align: center;width:600px ">Enter your phone to check existing application
         <div >
         <lightning-input id="searchPhone" class="slds-var-p-left_medium slds-var-p-right_medium slds-var-p-bottom_medium" lable="Phone Number" style="text-align: left;" placeholder="2 digit country code followed by 10 digit valid phone number" required="true" pattern="[0-9]{2}[0-9]{10}" message-when-pattern-mismatch="Phone number must be in valid format" message-when-value-missing="Please enter a valid phone number"  value={searchPhoneKey} onchange={handlePhoneSearch}></lightning-input>
-        <!-- <lightning-button class="slds-var-p-right_x-small slds-var-p-top_small" label="Clear" variant="brand-outline" onclick={handleSearchPhoneClearBtn}></lightning-button> -->
 
-        
         <div class="demo-only demo-only--sizing slds-grid slds-wrap slds-var-p-left_x-small slds-var-p-right_x-small">
 
         <div class="slds-size_2-of-8">
@@ -139,9 +137,7 @@
                                          
                                          > 
                         </lightning-input>
-                         <!-- <template if:true={incomeInvalidMessageflag}>
-                          <div style="font-size:12px;text-align: left;color: #ba0517">Monthly income must be below SGD 2000.</div>
-                          </template>  -->
+                       
                         <lightning-combobox 
             
                             name="Support Options" 
