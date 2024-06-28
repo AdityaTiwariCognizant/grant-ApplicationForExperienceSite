@@ -33,10 +33,7 @@ public without sharing class GrantApplicationController {
     // map with label,records of custom metadata - required to create grant disbursed records                                                              
     public static Map<String,Grant_Application_Params__mdt> mdtMap = prepareCustomMetadata();
     
-    //why parameters are required
-    //what this method is doing
-    // explain a logic a little bit and make the method understandable for
-    //other developer
+    
     
    
 
@@ -145,117 +142,29 @@ public without sharing class GrantApplicationController {
                     Postal_Code__c = PostalCode,
                     Monthly_Income__c = MonthlyIncome,
                     Support_Option__c = SupportOption
-                );
-                        
+                );                        
                 insert as user grantApp;
-                    
+  
                 Contact applicantContact = new Contact(
                     FirstName = FirstName,
                     LastName = LastName,
                     Phone = Phone,
                     MailingPostalCode = String.valueOf(PostalCode)
                 );
-                    
                 applicantContact.OwnerId = currentUserId;
-                    
-               
-                insert as user applicantContact;
-                
+                insert as user applicantContact;  
                 grantContactId = applicantContact.Id;      
             }
 
             // Conditional : if an existing phone number is found, update the record 
             // according to the new information provided
-            // If some of the grants have been disbursed; then recalculation of amount to be disbursed
-            // and months that are remaining needs to be done (simply distributing remaining amount over 
-            // remaining months of disbursal)
             else if (searchPhoneinContactAndGrantApplication[0][0].get('Phone')==Phone) {
-
                 updateGrantContactId = searchPhoneinContactAndGrantApplication[0][0].Id;
                 updateGrantApplicationId = searchPhoneinContactAndGrantApplication[1][0].Id;
-                Grant_Application__c newGAObject = new Grant_Application__c(
-                    Id = updateGrantApplicationId,
-                    First_Name__c = FirstName,
-                    Last_Name__c = LastName,
-                    Phone_Number__c = Phone,
-                    Postal_Code__c = PostalCode,
-                    Monthly_Income__c = MonthlyIncome,
-                    Support_Option__c = SupportOption
-                );
-                Contact newGAContactObj = new Contact(
-                    Id = updateGrantContactId,
-                    FirstName = FirstName,
-                    LastName = LastName,
-                    Phone = Phone,
-                    MailingPostalCode = String.valueOf(PostalCode)
-                );
-                    
-                Decimal amountAlreadyDisbursed=0;
-                Decimal totalAmountPromised=0;
-                Integer monthDisbursedCount=0;
-                Decimal remainingGrantFund = 0;
-                Integer remainingMonths = 0;
-                Decimal updatedMonthlyGrant=0;
-                    
-                List<Grant_Disbursed__c> gdListForContact = [
-                                                                SELECT 
-                                                                    Disbursed_Amount__c,
-                                                                    Contact_for_Grant_Applicant__r.Full_Name__c,
-                                                                    Is_Grant_disbursed__c from Grant_Disbursed__c 
-                                                                WHERE Contact_for_Grant_Applicant__c = :updateGrantContactId 
-                                                                WITH USER_MODE
-                                                            ];
-                    
-                for (Grant_Disbursed__c gd : gdListForContact) {
-                    if (gd.Is_Grant_disbursed__c==true) {
-                        monthDisbursedCount+=1;
-                        amountAlreadyDisbursed+=gd.Disbursed_Amount__c;
-                    }
-                       totalAmountPromised += gd.Disbursed_Amount__c;                        
-                }
-        
-                String month = String.valueOf(mdtMap.get(supportOption).Months_of_grant__c);
-                Decimal amount = (Decimal)mdtMap.get(supportOption).Amount_each_month__c;
-                    
-                remainingGrantFund = amount * Decimal.valueOf(month) - amountAlreadyDisbursed;
-                remainingMonths = Integer.valueOf(month) - monthDisbursedCount;
-                
-                if (remainingMonths<=0) {
-                    throw new SubmitCustomException('Grant months(duration) already exceeds chosen option');
-                }
-                    
-                if (amountAlreadyDisbursed> amount* Integer.valueOf(month)) {
-                    throw new SubmitCustomException('Grant amount already exceeds chosen option');
-                }
-                    
-                List <Grant_Disbursed__c> deleteOldGDList = [
-                                                                SELECT Id from Grant_Disbursed__c 
-                                                                WHERE Contact_for_Grant_Applicant__c = :updateGrantContactId 
-                                                                AND Is_Grant_disbursed__c = false 
-                                                                WITH USER_MODE
-                                                            ];
-                delete deleteOldGDList;
-                updatedMonthlyGrant = Math.ceil(remainingGrantFund/remainingMonths);
-                    
-                Date firstDayOfNextMonth = calculateDisbursalDate();
-                    
-                List<Grant_Disbursed__c> toBeUpdatedGrantDisbursedRecordList = new List<Grant_Disbursed__c>();
-                    
-                Integer subsequentMonth = 1;
-                for (;remainingMonths>0;remainingMonths--) {
-                    Grant_Disbursed__c gdObject = new Grant_Disbursed__c(
-                        Contact_for_Grant_Applicant__c = updateGrantContactId,
-                        Disbursed_Amount__c = updatedMonthlyGrant,
-                        Disbursed_Date__c = firstDayOfNextMonth.addMonths(subsequentMonth)
-                    );
-                    toBeUpdatedGrantDisbursedRecordList.add(gdObject);
-                    subsequentMonth++;
-                }
-                insert toBeUpdatedGrantDisbursedRecordList;
-                update newGAObject;
-                update newGAContactObj;
+                evaluateSupportParameters(SupportOption,updateGrantContactId,mdtMap);
+                updateGrandAppAndContact(FirstName,LastName,Phone,PostalCode,MonthlyIncome,SupportOption,
+                                         updateGrantContactId,updateGrantApplicationId);
             }
-
             if (searchPhoneinContactAndGrantApplication[0].isEmpty()) {
                 String metadataJson = JSON.serialize(mdtMap);
                 insertGrantDisbursed(metadataJson,SupportOption,grantContactId);
@@ -265,6 +174,117 @@ public without sharing class GrantApplicationController {
             System.debug('Exception message'+e.getMessage());     
        }
     }
+
+
+/*
+*********************************************************
+@Method Name    : updateGrandAppAndContact
+@author         : Aditya Tiwari
+@description    : This method update the Contact and Grant Application object when a matching phone number
+@param          : None
+@param          : FirstName
+@param          : LastName
+@param          : Phone
+@param          : PostalCode
+@param          : MonthlyIncome
+@param          : SupportOption
+@param          : updateGrantContactId
+@param          : updateGrantApplicationId
+
+@return         : None
+********************************************************
+*/
+public static void updateGrandAppAndContact(String FirstName,String LastName,String Phone,Decimal PostalCode,Decimal MonthlyIncome,String SupportOption,Id updateGrantContactId,Id updateGrantApplicationId){
+    Grant_Application__c newGAObject = new Grant_Application__c(
+        Id = updateGrantApplicationId,
+        First_Name__c = FirstName,
+        Last_Name__c = LastName,
+        Phone_Number__c = Phone,
+        Postal_Code__c = PostalCode,
+        Monthly_Income__c = MonthlyIncome,
+        Support_Option__c = SupportOption
+    );
+    Contact newGAContactObj = new Contact(
+        Id = updateGrantContactId,
+        FirstName = FirstName,
+        LastName = LastName,
+        Phone = Phone,
+        MailingPostalCode = String.valueOf(PostalCode)
+    );
+    update newGAObject;
+    update newGAContactObj;
+}
+
+/*
+*********************************************************
+@Method Name    : evaluateSupportParameters
+@author         : Aditya Tiwari
+@description    : This method returns date for first day of immediate next month from current month
+@param          : SupportOption
+@param          : updateGrantContactId
+@param          : mdtMap
+
+@return         : None
+********************************************************
+*/
+
+    public static void evaluateSupportParameters(String SupportOption,Id updateGrantContactId,Map<String,Grant_Application_Params__mdt> mdtMap){
+        Decimal amountAlreadyDisbursed=0;
+        Decimal totalAmountPromised=0;
+        Integer monthDisbursedCount=0;
+        Decimal remainingGrantFund = 0;
+        Integer remainingMonths = 0;
+        Decimal updatedMonthlyGrant=0;                
+        List<Grant_Disbursed__c> gdListForContact = [
+                                                        SELECT 
+                                                            Disbursed_Amount__c,
+                                                            Contact_for_Grant_Applicant__r.Full_Name__c,
+                                                            Is_Grant_disbursed__c from Grant_Disbursed__c 
+                                                        WHERE Contact_for_Grant_Applicant__c = :updateGrantContactId 
+                                                        WITH USER_MODE
+                                                    ];               
+        for (Grant_Disbursed__c gd : gdListForContact) {
+            if (gd.Is_Grant_disbursed__c==true) {
+                   monthDisbursedCount+=1;
+                   amountAlreadyDisbursed+=gd.Disbursed_Amount__c;
+            }
+            totalAmountPromised += gd.Disbursed_Amount__c;                        
+        }
+        String month = String.valueOf(mdtMap.get(supportOption).Months_of_grant__c);
+        Decimal amount = (Decimal)mdtMap.get(supportOption).Amount_each_month__c;
+        remainingGrantFund = amount * Decimal.valueOf(month) - amountAlreadyDisbursed;
+        remainingMonths = Integer.valueOf(month) - monthDisbursedCount;
+
+        if (remainingMonths<=0) {
+            throw new SubmitCustomException('Grant months(duration) already exceeds chosen option');
+        }   
+        if (amountAlreadyDisbursed> amount* Integer.valueOf(month)) {
+            throw new SubmitCustomException('Grant amount already exceeds chosen option');
+        }
+        List <Grant_Disbursed__c> deleteOldGDList = [
+                                                        SELECT Id from Grant_Disbursed__c 
+                                                        WHERE Contact_for_Grant_Applicant__c = :updateGrantContactId 
+                                                        AND Is_Grant_disbursed__c = false 
+                                                        WITH USER_MODE
+                                                    ];
+        delete deleteOldGDList;
+
+        updatedMonthlyGrant = Math.ceil(remainingGrantFund/remainingMonths);
+        Date firstDayOfNextMonth = calculateDisbursalDate();               
+        List<Grant_Disbursed__c> toBeUpdatedGrantDisbursedRecordList = new List<Grant_Disbursed__c>(); 
+
+            Integer subsequentMonth = 1;
+            for (;remainingMonths>0;remainingMonths--) {
+                Grant_Disbursed__c gdObject = new Grant_Disbursed__c(
+                    Contact_for_Grant_Applicant__c = updateGrantContactId,
+                    Disbursed_Amount__c = updatedMonthlyGrant,
+                    Disbursed_Date__c = firstDayOfNextMonth.addMonths(subsequentMonth)
+                );
+                toBeUpdatedGrantDisbursedRecordList.add(gdObject);
+                subsequentMonth++;
+            }
+            insert toBeUpdatedGrantDisbursedRecordList;
+}
 
 
 /*
@@ -292,35 +312,35 @@ public without sharing class GrantApplicationController {
             Integer monthsOfGrant = Integer.valueOf(metadataMap.get(supportOption).Months_of_grant__c);
             Integer amountPerMonth = Integer.valueOf(metadataMap.get(supportOption).Amount_each_month__c);
                 
-                List<Grant_Disbursed__c> newGrantDisbursedList = new List<Grant_Disbursed__c>();
+            List<Grant_Disbursed__c> newGrantDisbursedList = new List<Grant_Disbursed__c>();
                 
-                for (Integer i=0;i<monthsOfGrant;i++) {
-                    Date currentDate = Date.today();
+            for (Integer i=0;i<monthsOfGrant;i++) {
+                Date currentDate = Date.today();
+                
+                Integer nextMonth;
+                Integer nextYear;
                     
-                    Integer nextMonth;
-                    Integer nextYear;
-                    
-                    if (currentDate.month() == 12) {
-                        nextMonth = 1;
-                        nextYear = currentDate.year() + 1;
-                    } else {
-                        nextMonth = currentDate.month() + 1;
-                        nextYear = currentDate.year();
-                    }
-                    
-                    Date firstDayOfNextMonth = Date.newInstance(nextYear, nextMonth, 1);
-                    
-                    Grant_Disbursed__c gdObject = new Grant_Disbursed__c(
-                        Contact_for_Grant_Applicant__c = grantContactId,
-                        Disbursed_Amount__c = (Decimal)amountPerMonth,
-                        Disbursed_Date__c = firstDayOfNextMonth.addMonths(i)
-                    );
-                    
-                    newGrantDisbursedList.add(gdObject);
-                    
+                if (currentDate.month() == 12) {
+                    nextMonth = 1;
+                    nextYear = currentDate.year() + 1;
+                } else {
+                    nextMonth = currentDate.month() + 1;
+                    nextYear = currentDate.year();
                 }
+                    
+                Date firstDayOfNextMonth = Date.newInstance(nextYear, nextMonth, 1);
+                    
+                Grant_Disbursed__c gdObject = new Grant_Disbursed__c(
+                    Contact_for_Grant_Applicant__c = grantContactId,
+                    Disbursed_Amount__c = (Decimal)amountPerMonth,
+                    Disbursed_Date__c = firstDayOfNextMonth.addMonths(i)
+                );
+                    
+                newGrantDisbursedList.add(gdObject);
+                    
+            }
                 
-                insert newGrantDisbursedList;
+            insert newGrantDisbursedList;
                 
                 
         } catch (Exception e) {
@@ -350,7 +370,6 @@ public without sharing class GrantApplicationController {
         for (Grant_Application_Params__mdt option : metaDataOptionsList) {
             options.put('SGD '+String.valueOf(option.Amount_each_month__c)+' per month for '+String.valueOf(option.Months_of_grant__c)+' months', 'SGD '+String.valueOf(option.Amount_each_month__c)+' per month for '+String.valueOf(option.Months_of_grant__c)+' months');
         }
-        System.debug('### options:'+options);
         return options;
     }
      
